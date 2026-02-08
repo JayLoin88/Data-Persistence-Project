@@ -20,18 +20,6 @@ public class MainManager : MonoBehaviour
 
     public static MainManager Instance;
 
-    private void Awake()
-    {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
 
     // Start is called before the first frame update
     void Start()
@@ -71,7 +59,7 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                SceneManager.LoadScene(0);
             }
         }
     }
@@ -87,9 +75,13 @@ public class MainManager : MonoBehaviour
         m_GameOver = true;
         GameOverText.SetActive(true);
 
-        if (MenuUIHandler.Instance != null)
+        if (HighScoreManager.Instance != null)
         {
-            MenuUIHandler.Instance.UpdateHighScoreIfNeeded(m_Points);
+            bool isNew = HighScoreManager.Instance.TrySetHighScore(m_Points);
+            if (isNew)
+            {
+                Debug.Log($"New high score {m_Points} by {HighScoreManager.Instance.HighScoreUser}");
+            }
         }
     }
 }
