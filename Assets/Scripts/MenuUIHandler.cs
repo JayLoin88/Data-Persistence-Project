@@ -8,16 +8,51 @@ using System.IO;
 
 public class MenuUIHandler : MonoBehaviour
 {
+    public static MenuUIHandler Instance;
 
     public string userName;
+    public string highScoreUser;
     public TMP_InputField nameInputField;
     public TextMeshProUGUI highScoreText;
-    public float highScore;
+    public GameObject titleScreen;
+    public int highScore;
+    public TextMeshProUGUI bestScore;
+
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        Load();
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        FindBestScoreUI();
+    }
+
+    private void FindBestScoreUI()
+    {
+        var byName = GameObject.Find("Best Score Text");
+        if (byName != null)
+        {
+            bestScore = byName.GetComponent<TextMeshProUGUI>();
+            if (bestScore != null) return;
+        }
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        highScoreText.text = "High Score: " + highScore;
+        UpdateHighScoreText();
+        BestScoreText();
     }
 
     // Update is called once per frame
@@ -42,16 +77,75 @@ public class MenuUIHandler : MonoBehaviour
 
     public void NameEntered()
     {
-        if (nameInputField == null)
+        userName = nameInputField.text;
+    }
+
+    public void UpdateHighScoreIfNeeded(int score)
+    {
+        if (score <= highScore)
         {
-            Debug.LogWarning("Name input Field is not assigned.");
             return;
         }
 
-        userName = nameInputField.text;
+        highScore = score;
+        highScoreUser = string.IsNullOrEmpty(userName) ? "Unknown" : userName;
+        Save();
+        UpdateHighScoreText();
+    }
 
-        string json = JsonUtility.ToJson(userName);
+    public void UpdateHighScoreText()
+    {
+        if (bestScore == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(highScoreUser))
+        {
+            bestScore.text = "Best Score: " + highScore;
+        }
+        else
+        {
+            bestScore.text = $"Best Score: {highScoreUser} : {highScore}";
+        }
+    }
+
+    public void BestScoreText()
+    {
+        bestScore.text = "Best Score: " + highScoreUser + highScore;
+    }
+
+    [System.Serializable]
+    class SaveData
+    {
+        public string highScoreUser;
+        public int highScore;
+    }
+
+    private void Save()
+    {
+        SaveData data = new SaveData();
+        data.highScore = highScore;
+        data.highScoreUser = highScoreUser;
+
+        string json = JsonUtility.ToJson(data);
 
         File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    public void Load()
+    {
+        string path = (Application.persistentDataPath + "/savefile.json");
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            if (data != null)
+            {
+                highScore = data.highScore;
+                highScoreUser = data.highScoreUser;
+            }
+        }
     }
 }

@@ -86,5 +86,10 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+
+        if (MenuUIHandler.Instance != null)
+        {
+            MenuUIHandler.Instance.UpdateHighScoreIfNeeded(m_Points);
+        }
     }
 }
